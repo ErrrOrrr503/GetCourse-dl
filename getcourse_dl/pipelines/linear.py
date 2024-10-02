@@ -9,7 +9,7 @@ from os import mkdir
 
 
 class LinearPipeline(AbstractPipeline):
-    def run(self):
+    def run(self) -> None:
         self._iterate_tree_deep(self.tree, '', [self.startpoint])
 
     def _iterate_tree_deep(self, node: PipelineTree, path: str, links: list[Link], page: str | None = None) -> None | str:
@@ -47,9 +47,10 @@ class LinearPipeline(AbstractPipeline):
                     return None
             else:
                 raise Exception('This must be unreachable. Dramatic flaw in code')
+        return None
 
     @staticmethod
-    def mkpath_for(file_path: str):
+    def mkpath_for(file_path: str) -> None:
         dir = dirname(file_path)
         mkdir(dir, 0o755)
 

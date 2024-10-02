@@ -14,5 +14,5 @@ class AbstractDownloader(ABC):
         self.output_path = output_path
 
     @abstractmethod
-    def download(self):
+    def download(self) -> None:
         """ perform dload """

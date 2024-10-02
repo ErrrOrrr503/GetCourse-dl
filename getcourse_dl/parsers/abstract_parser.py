@@ -23,7 +23,7 @@ class AbstractParser(ABC):
         if page:
             self.page = page
 
-    def get(self):
+    def get(self) -> None:
         try:
             response = nlim.get(self.link.url)
         except Exception as e:

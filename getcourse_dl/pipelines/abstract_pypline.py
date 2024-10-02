@@ -19,7 +19,7 @@ class PipelineTree:
     def append_child(self, item: Type[AbstractParser] | Type[AbstractDownloader]) -> None:
         self._children.append(PipelineTree(item, self))
 
-    def children(self) -> Generator:
+    def children(self) -> Generator[Any]:
         return (child for child in self._children)
 
 
@@ -32,5 +32,5 @@ class AbstractPipeline(ABC):
         self.startpoint = startpoint
 
     @abstractmethod
-    def run(self):
+    def run(self) -> None:
         """ implement how to run pipeline """
