@@ -12,6 +12,9 @@ class Link:
     url: str
     name: str
 
+    def __repr__(self) -> str:
+        return 'Link({}, {})'.format(self.url, self.name)
+
 
 class AbstractParser(ABC):
     page: str = ''

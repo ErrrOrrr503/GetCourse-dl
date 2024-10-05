@@ -4,6 +4,7 @@ Simple project-wide logger
 from enum import Enum
 from typing import Any
 from termcolor import colored
+import os
 
 
 class Verbosity(Enum):
@@ -42,6 +43,19 @@ class Logger():
 
     def print_as_is(self, verbosity: Verbosity, *print_args: Any, **print_kwargs: Any) -> None:
         self._print(False, verbosity, *print_args, **print_kwargs)
+
+    def dump(self, contents: str, filename: str) -> None:
+        os.makedirs('dumps', exist_ok=True)
+        try:
+            with open(os.path.join('dumps/' + filename), 'w') as file:
+                file.write(contents)
+        except Exception as e:
+            self.print(self.verbosity,
+                       'Failed to dump {}; reason: {}'.format(filename, e))
+
+    def dump_webpage(self, contents: str, url: str) -> None:
+        filename = url.replace('/', '_').replace(':', '_').replace('\\', '_')
+        self.dump(contents, filename)
 
 
 logger = Logger()

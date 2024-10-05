@@ -4,8 +4,7 @@ from getcourse_dl.pipelines.abstract_pypline import AbstractPipeline, PipelineTr
 from getcourse_dl.parsers.abstract_parser import AbstractParser, Link, ParserException
 from getcourse_dl.downloaders.abstract_downloader import AbstractDownloader, DownloaderException
 from getcourse_dl.logger.logger import Verbosity, logger
-from os.path import dirname
-from os import mkdir
+import os
 
 
 class LinearPipeline(AbstractPipeline):
@@ -21,14 +20,19 @@ class LinearPipeline(AbstractPipeline):
                 try:
                     parsed_links = parser.parse()
                 except ParserException as e:
-                    logger.print(Verbosity.WARNING, 'link {} failed to be parsed with {}.\n\tcause: {}'.format(link.url, parser, str(e)))
+                    logger.print(Verbosity.WARNING, 'link {} failed to be parsed with {}.\n\tcause: {}'.format(
+                        link.url, parser, str(e)))
+                    if parser.page:
+                        logger.print(Verbosity.WARNING, 'dumping webpage')
+                        logger.dump_webpage(parser.page, link.url)
+                        return page
                     return None
                 # now call lower level
-                next_path = path + '/' + link.name
+                next_path = os.path.join(path, link.name)
                 next_node = next(node.children())
                 saved_page = self._iterate_tree_deep(next_node,
-                                        next_path,
-                                        parsed_links)
+                                                     next_path,
+                                                     parsed_links)
                 for next_node in node.children():
                     self._iterate_tree_deep(next_node,
                                             next_path,
@@ -36,21 +40,22 @@ class LinearPipeline(AbstractPipeline):
                                             saved_page)
                 return parser.page
             elif issubclass(executor_type, AbstractDownloader):
-                output_path = path + '/' + link.name
+                output_path = os.path.join(path, link.name)
                 self.mkpath_for(output_path)
                 downloader = executor_type(url=link.url,
                                            output_path=output_path)
                 try:
                     downloader.download()
                 except DownloaderException as e:
-                    logger.print(Verbosity.WARNING, 'download from {} failed with {}.\n\tcause: {}'.format(link.url, downloader, str(e)))
+                    logger.print(Verbosity.WARNING, 'download from {} failed with {}.\n\tcause: {}'.format(
+                        link.url, downloader, str(e)))
                     return None
             else:
-                raise Exception('This must be unreachable. Dramatic flaw in code')
+                raise Exception(
+                    'This must be unreachable. Dramatic flaw in code')
         return None
 
     @staticmethod
     def mkpath_for(file_path: str) -> None:
-        dir = dirname(file_path)
-        mkdir(dir, 0o755)
-
+        dir = os.path.dirname(file_path)
+        os.makedirs(dir, exist_ok=True)

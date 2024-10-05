@@ -12,21 +12,32 @@ from getcourse_dl.logger.logger import logger, Verbosity
 class NWrap:
     _browser: str | None = None
     _cookies: requests.cookies.RequestsCookieJar
+    _session: requests.Session
+
+    def __init__(self) -> None:
+        self._session = requests.Session()
+        self._session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0'
+        })
 
     def load_cookies(self, browser: str | None = None) -> None:
         self._browser = browser
         load_method = browser_cookie3.load
         if browser:
             try:
-                logger.print(Verbosity.INFO, 'Loading cookies from "{}"'.format(browser))
+                logger.print(Verbosity.INFO,
+                             'Loading cookies from "{}"'.format(browser))
                 load_method = getattr(browser_cookie3, browser)
-            except Exception as e:
-                logger.print(Verbosity.ERROR, 'browser "{}" is invalid or not supported. Falling back to all browsers'.format(browser))
+            except Exception:
+                logger.print(
+                    Verbosity.ERROR, 'browser "{}" is invalid or not supported. Falling back to all browsers'.format(browser))
         self._cookies = load_method(domain_name='getcourse.ru')
-        logger.print(Verbosity.INFO, 'loaded cookies: {}'.format(self._cookies))
+        logger.print(Verbosity.INFO,
+                     'loaded cookies: {}'.format(self._cookies))
 
     def get(self, *args: Any, **kwargs: Any) -> requests.Response:
-        return requests.get(*args, **kwargs, cookies=self._cookies)  # by far dummy
+        # by far dummy
+        return self._session.get(*args, **kwargs, cookies=self._cookies)
 
 
 nwrap = NWrap()
