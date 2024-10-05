@@ -5,6 +5,7 @@ from getcourse_dl.parsers.abstract_parser import Link
 from getcourse_dl.pipelines.abstract_pypline import PipelineTree
 from getcourse_dl.pipelines.linear import LinearPipeline
 from getcourse_dl.logger.logger import logger, Verbosity
+from getcourse_dl.network_wrapper.nwrap import nwrap
 import argparse
 import sys
 
@@ -20,18 +21,29 @@ class ParsedArgs:
 
 
 def parse_args() -> ParsedArgs:
+    """ perform all args verification and print usage """
     argparser = argparse.ArgumentParser(prog="GetCourse downoader")
     argparser.add_argument('-v', '--verbosity',
-                           choises=range(0, 5),
-                           type=Verbosity)
-    argparser.add_argument('url', required=True)
-    argparser.add_argument('target_dir')
-    parsed_args = argparser.parse_args(sys.argv)
-    logger.verbosity = parsed_args.verbosity or Verbosity.WARNING
-    return ParsedArgs(Link(parsed_args.url, parsed_args.target_dir or ''))
-    
+                           choices=range(0, 6),
+                           type=int,
+                           help='Verbosity')
+    argparser.add_argument('-o', '--output_target_dir', help='Where to store failes')
+    argparser.add_argument('-u', '--url', help='Link to the cource', required=True)
+    argparser.add_argument('-b', '--browser', help='Browser, to load cookies from')
+    parsed_args = argparser.parse_args(sys.argv[1:])
+    logger.verbosity = Verbosity.WARNING
+    try:
+        logger.verbosity = Verbosity(int(parsed_args.verbosity))
+    except TypeError:
+        pass  # ignore
+    nwrap.load_cookies(parsed_args.browser)
+    logger.print(Verbosity.INFO, 'url={}'.format(parsed_args.url))
+    #if len(parsed_args.url) == 0:
+    #    argparser.print_help()
+    return ParsedArgs(Link(parsed_args.url, parsed_args.output_target_dir or ''))
+
  
-if __name__ == "main":
+if __name__ == "__main__":
     args = parse_args()
     pipeline = LinearPipeline(test_pipeline_tree, args.target_link)
     pipeline.run()

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from getcourse_dl.network_limiter.nlim import nlim
+from getcourse_dl.network_wrapper.nwrap import nwrap
 
 
 class ParserException(Exception):
@@ -25,7 +25,7 @@ class AbstractParser(ABC):
 
     def get(self) -> None:
         try:
-            response = nlim.get(self.link.url)
+            response = nwrap.get(self.link.url)
         except Exception as e:
             raise ParserException('Getting page failed due to: ' + str(e))
         if response.status_code != 200:
