@@ -20,7 +20,7 @@ class TrainingsParser(AbstractParser):
             raise ParserException('smth wrong with table')
         rows = table.find_all('tr')
         for row in rows:
-            url = row.find('a')['href']
+            url = 'https://dmdev.getcourse.ru' + row.find('a')['href']
             name = row.find('span', attrs={'class': 'stream-title'}).string
             link = Link(url, name)
             logger.print(Verbosity.INFO,

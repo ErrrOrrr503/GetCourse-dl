@@ -9,10 +9,17 @@ import os
 
 class LinearPipeline(AbstractPipeline):
     def run(self) -> None:
-        self._iterate_tree_deep(self.tree, '', [self.startpoint])
+        self._iterate_tree_deep(self.tree, '', [self.startpoint], [None])
 
-    def _iterate_tree_deep(self, node: PipelineTree, path: str, links: list[Link], page: str | None = None) -> None | str:
-        for link in links:
+    def _iterate_tree_deep(self,
+                           node: PipelineTree,
+                           path: str,
+                           links: list[Link],
+                           pages: list[str | None]) -> tuple[bool, list[None | str]]:
+        saved_pages: list[str | None] = [None] * len(links)
+        success = True
+        for i, link in enumerate(links):
+            page = pages[i]
             executor_type = node.item
             if issubclass(executor_type, AbstractParser):
                 parser = executor_type(link=link, page=page)
@@ -25,20 +32,28 @@ class LinearPipeline(AbstractPipeline):
                     if parser.page:
                         logger.print(Verbosity.WARNING, 'dumping webpage')
                         logger.dump_webpage(parser.page, link.url)
-                        return page
-                    return None
+                        saved_pages[i] = parser.page
+                    success = False
+                    continue
+                saved_pages[i] = parser.page
                 # now call lower level
                 next_path = os.path.join(path, link.name)
-                next_node = next(node.children())
-                saved_page = self._iterate_tree_deep(next_node,
-                                                     next_path,
-                                                     parsed_links)
-                for next_node in node.children():
-                    self._iterate_tree_deep(next_node,
-                                            next_path,
-                                            parsed_links,
-                                            saved_page)
-                return parser.page
+                children = node.children()
+                next_node = next(children)
+                lower_success, lower_saved_pages = self._iterate_tree_deep(next_node,
+                                                                           next_path,
+                                                                           parsed_links,
+                                                                           [None] * len(parsed_links))
+                if lower_success is True:
+                    continue
+                for next_node in children:
+                    lower_success, _ = self._iterate_tree_deep(next_node,
+                                                               next_path,
+                                                               parsed_links,
+                                                               lower_saved_pages)
+                    if lower_success is True:
+                        break
+                success = lower_success
             elif issubclass(executor_type, AbstractDownloader):
                 output_path = os.path.join(path, link.name)
                 self.mkpath_for(output_path)
@@ -49,11 +64,12 @@ class LinearPipeline(AbstractPipeline):
                 except DownloaderException as e:
                     logger.print(Verbosity.WARNING, 'download from {} failed with {}.\n\tcause: {}'.format(
                         link.url, downloader, str(e)))
-                    return None
+                    success = False
+                    continue
             else:
                 raise Exception(
                     'This must be unreachable. Dramatic flaw in code')
-        return None
+        return success, saved_pages
 
     @staticmethod
     def mkpath_for(file_path: str) -> None:

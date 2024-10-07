@@ -14,6 +14,7 @@ beautifulsoup4 = "^4.12.3"
 requests = "^2.32.3"
 termcolor = "^2.4.0"
 browser-cookie3 = "^0.19.1"
+yt-dlp = "^2024.9.27"
 
 
 [tool.poetry.group.dev.dependencies]

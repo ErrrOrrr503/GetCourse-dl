@@ -12,15 +12,29 @@ class PipelineTree:
                  _parent: Any = None) -> None:
         self._children: list[PipelineTree] = []
         if not (isinstance(_parent, PipelineTree) or _parent is None):
-            raise Exception('Fatal. Wrong tree usage. _parent is {}'.format(_parent))
+            raise Exception(
+                'Fatal. Wrong tree usage. _parent is {}'.format(_parent))
         self._parent: PipelineTree | None = _parent
         self.item = item
 
-    def append_child(self, item: Type[AbstractParser] | Type[AbstractDownloader]) -> None:
+    def append_child(self, item: Type[AbstractParser] | Type[AbstractDownloader]) -> Any:
         self._children.append(PipelineTree(item, self))
+        return self._children[-1]
 
     def children(self) -> Generator[Any, None, None]:
         return (child for child in self._children)
+
+    def __repr__(self) -> str:
+        res = ''
+        prefix = ''
+        return self._repr_tree(res, prefix)  # list to make res mutable
+
+    def _repr_tree(self, res: str, prefix: str) -> str:
+        res += prefix + self.item.__name__ + '\n'
+        prefix = ' ' * len(prefix) + '˪'
+        for child in self._children:
+            res = child._repr_tree(res, prefix)
+        return res
 
 
 class AbstractPipeline(ABC):
